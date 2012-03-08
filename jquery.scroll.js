@@ -170,11 +170,13 @@ Changelog:
         //   $('selector').scrollbar("scrollto", $('item'),speed,easing);         // scroll to first content item identified by selector $('item')
         //
         scrollto: function(to,speed,easing){
-			var speed = (speed || false),
-			easing = easing || false;
-            return this.each(function(){
-                this.scrollbar.scrollto(to,speed,easing);
-            });
+		var speed = (speed || false),
+		easing = easing || false;
+            	return this.each(function(){
+            		if(this.scrollbar) {
+                		this.scrollbar.scrollto(to,speed,easing);
+            		}
+            	});
         },
         
         // Remove the scrollbar (and the generated HTML elements).
