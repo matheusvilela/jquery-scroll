@@ -153,6 +153,8 @@ Changelog:
             return this.each(function(){
                 if(this.scrollbar) {
                   this.scrollbar.repaint();
+                } else {
+                  methods.init.apply(this);
                 }
             });
         },
