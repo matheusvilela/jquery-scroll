@@ -154,7 +154,7 @@ Changelog:
                 if(this.scrollbar) {
                   this.scrollbar.repaint();
                 } else {
-                  methods.init.apply($(this));
+                  $(this).scrollbar();
                 }
             });
         },
