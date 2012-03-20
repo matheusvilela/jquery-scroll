@@ -188,10 +188,10 @@ Changelog:
         //
         unscrollbar: function() {
           return this.each(function() {
-            if(this.scrollbar) {
-              this.scrollbar.unscrollbar();
-			  this.scrollbar = null;
-            }
+			if(this.scrollbar) {
+				console.log('unscrollbaring');
+				this.scrollbar.unscrollbar();
+			  }
           });
         }
     }
@@ -543,10 +543,11 @@ Changelog:
         // Remove scrollbar dom elements
         //
         unscrollbar: function() {
-          var holder = this.container.find('.scrollbar-pane').html();
+          var holder = this.container.find('.scrollbar-pane');
+			holder.css('height',holder.data('originalHeight') || 'auto');
 			if(holder !== null) {
 				this.container.empty();
-				this.container.append(holder);
+				this.container.append(holder.html());
 				this.container.attr('style','');
 			}
         },
