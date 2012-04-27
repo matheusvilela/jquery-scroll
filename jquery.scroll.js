@@ -84,25 +84,12 @@ Changelog:
 */
 (function($, document){
 
-    // due to possible conflicts in jQuery’s namespace with lots of namespace-polluting methods, we use this method-delegation pattern (well known from jquery-UI):
-    //
-    // Rather than naming methods like this:
-    //
-    //      container.scrollbarRepaint();
-    //
-    // the following method-command should be used:
-    //
-    //      container.scrollbar('repaint');
-    //
     var methods = {
         init: function(fn, opts){
 
             // Extend default options
             var options = $.extend({}, $.fn.scrollbar.defaults, opts);
 
-            //
-            // append scrollbar to selected overflowed containers and return jquery object for chainability
-            //
             return this.each(function(){
 
                 var container = $(this)
@@ -189,7 +176,6 @@ Changelog:
         unscrollbar: function() {
           return this.each(function() {
 			if(this.scrollbar) {
-				console.log('unscrollbaring');
 				this.scrollbar.unscrollbar();
 			  }
           });
@@ -197,6 +183,7 @@ Changelog:
     }
 
     $.fn.scrollbar = function(method){
+	
         if(methods[method]){
             return methods[method].apply(this, Array.prototype.slice.call(arguments, 1));
         }
@@ -249,68 +236,6 @@ Changelog:
     //
     $.fn.scrollbar.Scrollbar.prototype = {
 
-        //
-        // build DOM nodes for pane and scroll-handle based on the following box model:
-        //
-        //        +----------------------------------+
-        //        |            <----------------------------- content container
-        //        |  +-----------------+  +------+   |
-        //        |  |                 |  |   <-------------- handle arrow up
-        //        |  |                 |  |      |   |
-        //        |  |                 |  +------+   |
-        //        |  |                 |  | +--+ |   |
-        //        |  |                 |  | |  | |   |
-        //        |  |                 |  | | <-------------- handle
-        //        |  |                 |  | |  | |   |
-        //        |  |                 |  | |  | |   |
-        //        |  |                 |  | |  | |   |
-        //        |  |                 |  | +--+ |   |
-        //        |  |                 |  |      |   |
-        //        |  |                 |  |   <-------------- handle container
-        //        |  |                 |  |      |   |
-        //        |  |         <----------------------------- pane
-        //        |  |                 |  |      |   |
-        //        |  |                 |  |      |   |
-        //        |  |                 |  +------+   |
-        //        |  |                 |  |      |   |
-        //        |  |                 |  |   <-------------- handle arrow down
-        //        |  +-----------------+  +------+   |
-        //        |                                  |
-        //        +----------------------------------+
-        //
-        //
-        //
-        //   DOM before:
-        //
-        //         <div class="foo" id="content_container">                       --> arbitrary element with a fixed height or a max-height lower that its containing elements
-        //             [...content...]
-        //         </div>
-        //
-        //
-        //   DOM after applying plugin:
-        //
-        //         <div class="foo">                                              --> this.container
-        //             <div class="scrollbar-pane" id="content_container">        --> this.pane
-        //                 [...content...]
-        //             </div>
-        //             <div class="scrollbar-handle-container">                   --> this.handleContainer
-        //                 <div class="scrollbar-handle"></div>                   --> this.handle
-        //             </div>
-        //             <div class="scrollbar-handle-up"></div>                    --> this.handleArrows
-        //             <div class="scrollbar-handle-down"></div>                  --> this.handleArrows
-        //         </div>
-        //
-        //
-        //   If the option moveContainerId is set to true, an id attribute on the container is moved to it's
-        //   child node 'pane' which holds the content after applying the plugin. This may be useful when dynamic
-        //   content is added via $('#content_container').load().
-        //
-        //   The above class-attribute values can be used for styling the scrollbar with CSS.
-        //
-        //
-        //
-        // TODO: use detach-transform-attach or DOMfragment
-        //
         buildHtml: function(){
 
             // build new DOM nodes
@@ -545,7 +470,7 @@ Changelog:
         unscrollbar: function() {
           var holder = this.container.find('.scrollbar-pane');
 			holder.css('height',holder.data('originalHeight') || 'auto');
-			if(holder !== null) {
+			if(holder.html() !== null) {
 				this.container.empty();
 				this.container.append(holder.html());
 				this.container.attr('style','');
