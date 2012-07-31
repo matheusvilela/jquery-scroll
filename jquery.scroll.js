@@ -121,27 +121,54 @@ Changelog:
                 // build HTML, initialize Handle and append Events
                 this.scrollbar.buildHtml().setHandle().appendEvents();
 
+                // repaint on resize
+                if(options.repaintOnResize) {
+                    var self = this;
+                    $(window).resize(function() {
+                        $(self).scrollbar('repaintAll', fn, opts);
+                    }); 
+                }
+
                 // callback function after creation of scrollbar
                 if(typeof fn === "function"){
                     fn(container.find(".scrollbar-pane"), this.scrollbar);
                 }
+
             });
         },
 
+        //
+        // repaint the size and position of everything
+        //
+        repaintAll : function(fn, opts) {
+          return this.each(function(){
+            if(this.scrollbar && this.scrollbar.pane.height() <= this.scrollbar.props.containerHeight) {
+              $(this).scrollbar('unscrollbar');
+            } else if (this.scrollbar) {
+              this.scrollbar.repaintAll();
+            } else {
+              $(this).scrollbar(fn, opts);
+            }
+          });
+        },
 
         // repaint the height and position of the scroll handle
         //
         // this method must be called in case content is added or reoved from the container.
         //
+        // if scrollbar is not nedeed, the method removes it
+        //
         // usage:
         //   $('selector').scrollbar("repaint");
         //
-        repaint: function(){
+        repaint: function(fn, opts){
             return this.each(function(){
-                if(this.scrollbar) {
+                if(this.scrollbar && this.scrollbar.pane.height() <= this.scrollbar.props.containerHeight) {
+                  $(this).scrollbar('unscrollbar');
+                } else if (this.scrollbar) {
                   this.scrollbar.repaint();
                 } else {
-                  $(this).scrollbar();
+                  $(this).scrollbar(fn, opts);
                 }
             });
         },
@@ -159,13 +186,13 @@ Changelog:
         //   $('selector').scrollbar("scrollto", $('item'),speed,easing);         // scroll to first content item identified by selector $('item')
         //
         scrollto: function(to,speed,easing){
-		var speed = (speed || false),
-		easing = easing || false;
-            	return this.each(function(){
-            		if(this.scrollbar) {
-                		this.scrollbar.scrollto(to,speed,easing);
-            		}
-            	});
+            var speed = (speed || false),
+            easing = easing || false;
+            return this.each(function(){
+                if(this.scrollbar) {
+                  this.scrollbar.scrollto(to,speed,easing);
+                }
+            });
         },
         
         // Remove the scrollbar (and the generated HTML elements).
@@ -175,9 +202,10 @@ Changelog:
         //
         unscrollbar: function() {
           return this.each(function() {
-			if(this.scrollbar) {
-				this.scrollbar.unscrollbar();
-			  }
+              if(this.scrollbar) {
+                this.scrollbar.unscrollbar();
+                delete this.scrollbar;
+              }
           });
         }
     }
@@ -211,7 +239,8 @@ Changelog:
         scrollTimeout       : 50,     // timeout of handle speed while mousedown on arrows [Number in milli sec].
         scrollStep          : 20,     // increment of handle position between two mousedowns on arrows [Number in px].
         scrollTimeoutArrows : 40,     // timeout of handle speed while mousedown in the handle container [Number in milli sec].
-        scrollStepArrows    : 3       // increment of handle position between two mousedowns in the handle container [px].
+        scrollStepArrows    : 3,      // increment of handle position between two mousedowns in the handle container [px].
+        repaintOnResize     : false,  // repaint scrollbar on window resize.
     };
 
 
@@ -259,7 +288,8 @@ Changelog:
             // set some default CSS attributes (may be overwritten by CSS definitions in an external CSS file)
             this.pane.defaultCss({
                 'top':      0,
-                'left':     0
+                'left':     0,
+                'right':    0
             });
             this.handleContainer.defaultCss({
                 'right':    0
@@ -282,7 +312,7 @@ Changelog:
             this.container.css({
                 'position': this.container.css('position') === 'absolute' ? 'absolute' : 'relative',
                 'overflow': 'hidden',
-                'height':   height
+                'height':  this.container.css('position') === 'absolute' ? 'auto' :  height
             });
             this.pane.css({
                 'position': 'absolute',
@@ -372,41 +402,41 @@ Changelog:
             // append hover event on content container
             this.container.bind('mouseenter.container mouseleave.container', $.proxy(this, 'onContentHover'));
 			
-            	//handle the key events
-		$(document).bind('keydown',function(e) {
-			if(self.container.hasClass('focused') || self.container.hasClass('hover')) {
-				var timer = false;
-				//bind the arrow keys
-				switch(e.keyCode) {
-					case 38 : 	//up arrow
-						e.preventDefault();
-						self.handle.direction = -1;
-						self.handle.step = self.opts.scrollStepArrows;
-						timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
-						break;
-					case 40 :	//down arrow
-						e.preventDefault();
-						self.handle.direction = 1;
-						self.handle.step = self.opts.scrollStepArrows;
-						timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
-						break;
-					case 33 :	//pgup
-						e.preventDefault();
-						self.handle.direction = -1;
-						self.handle.step = self.opts.scrollStepArrows*15;
-						timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
-						break;
-					case	34 : //pgdn
-						e.preventDefault();
-						self.handle.direction = 1;
-						self.handle.step = self.opts.scrollStepArrows*15;
-						timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
-						break;
-				}
-				
-			}
-			
-		});
+            //handle the key events
+            $(document).bind('keydown',function(e) {
+              if(self.container.hasClass('focused') || self.container.hasClass('hover')) {
+                var timer = false;
+                //bind the arrow keys
+                switch(e.keyCode) {
+                  case 38 : 	//up arrow
+                    e.preventDefault();
+                    self.handle.direction = -1;
+                    self.handle.step = self.opts.scrollStepArrows;
+                    timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
+                    break;
+                  case 40 :	//down arrow
+                    e.preventDefault();
+                    self.handle.direction = 1;
+                    self.handle.step = self.opts.scrollStepArrows;
+                    timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
+                    break;
+                  case 33 :	//pgup
+                    e.preventDefault();
+                    self.handle.direction = -1;
+                    self.handle.step = self.opts.scrollStepArrows*15;
+                    timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
+                    break;
+                  case	34 : //pgdn
+                    e.preventDefault();
+                    self.handle.direction = 1;
+                    self.handle.step = self.opts.scrollStepArrows*15;
+                    timer = setTimeout($.proxy(self.moveHandle, self), self.opts.scrollTimeoutArrows);
+                    break;
+                }
+                
+              }
+              
+            });
 
             // do not bubble down click events into content container
             this.handle.bind('click.scrollbar', this.preventClickBubbling);
@@ -426,15 +456,36 @@ Changelog:
 
 
         //
-        // repaint scrollbar height and position - if required!!! Otherwise, remove this
+        // repaint scrollbar height and position
         //
         repaint: function(){
-			if(this.pane.height() <= this.props.containerHeight) {
-				this.unscrollbar();
-			} else {
-				this.setHandle();
-				this.setHandlePosition();
-			}
+          this.setHandle();
+          this.setHandlePosition();
+        },
+
+        //
+        // repaint the size of the container
+        // and the size and position of the handle container
+        //
+        repaintAll: function() {
+            // re-set height of container in properties
+            var height = this.container.height();
+            this.props.containerHeight = height;
+
+            this.handleContainer = this.container.find('.scrollbar-handle-container');
+
+            // re-set some necessary CSS attributes
+            this.container.css({
+                'height':  this.container.css('position') === 'absolute' ? 'auto' :  height
+            });
+            this.handleContainer.css({
+                'top':      this.handleArrowUp.outerHeight(true),
+                'height':   (this.props.containerHeight - this.handleArrowUp.outerHeight(true) - this.handleArrowDown.outerHeight(true)) + 'px'
+            });
+
+            // repaint
+            this.repaint();
+            return this;
         },
 
         //
@@ -469,12 +520,12 @@ Changelog:
         //
         unscrollbar: function() {
           var holder = this.container.find('.scrollbar-pane');
-			holder.css('height',holder.data('originalHeight') || 'auto');
-			if(holder.html() !== null) {
-				this.container.empty();
-				this.container.append(holder.html());
-				this.container.attr('style','');
-			}
+          holder.css('height',holder.data('originalHeight') || 'auto');
+          if(holder.html() !== null) {
+            this.container.empty();
+            this.container.append(holder.html());
+            this.container.attr('style','');
+          }
         },
 
 
@@ -538,18 +589,18 @@ Changelog:
         // set position of handle
         //
         setHandlePosition: function(speed,easing){
-			var speed = (speed || false),
-			easing = ((easing) ? ($.fn.easing ? easing : 'swing') : false);
+          var speed = (speed || false),
+          easing = ((easing) ? ($.fn.easing ? easing : 'swing') : false);
 
-            // stay within range [handlePosition.min, handlePosition.max]
-            this.handle.top = (this.handle.top > this.props.handlePosition.max) ? this.props.handlePosition.max : this.handle.top;
-            this.handle.top = (this.handle.top < this.props.handlePosition.min) ? this.props.handlePosition.min : this.handle.top;
+                // stay within range [handlePosition.min, handlePosition.max]
+                this.handle.top = (this.handle.top > this.props.handlePosition.max) ? this.props.handlePosition.max : this.handle.top;
+                this.handle.top = (this.handle.top < this.props.handlePosition.min) ? this.props.handlePosition.min : this.handle.top;
 
-			if(speed && !isNaN(speed)) {
-				this.handle.stop().animate({top:this.handle.top+'px'},speed,easing);
-			} else {
-				this.handle[0].style.top = this.handle.top + 'px';
-			}
+          if(speed && !isNaN(speed)) {
+            this.handle.stop().animate({top:this.handle.top+'px'},speed,easing);
+          } else {
+            this.handle[0].style.top = this.handle.top + 'px';
+          }
         },
 
 
@@ -557,19 +608,19 @@ Changelog:
         // set position of content
         //
         setContentPosition: function(speed,easing){
-			var speed = (speed || false),
-			easing = ((easing) ? ($.fn.easing ? easing : 'swing') : false);
+          var speed = (speed || false),
+          easing = ((easing) ? ($.fn.easing ? easing : 'swing') : false);
 
-            // derive position of content from position of handle
-            this.pane.top = -1 * this.props.handleContentRatio * this.handle.top;
-			
-			if(speed && !isNaN(speed)) {
-				this.pane.stop().animate({top:this.pane.top+'px'},speed,easing);
-			} else {
-				this.pane[0].style.top = this.pane.top + 'px';
-			}
-			
-			this.container.trigger('scrolled');
+                // derive position of content from position of handle
+                this.pane.top = -1 * this.props.handleContentRatio * this.handle.top;
+          
+          if(speed && !isNaN(speed)) {
+            this.pane.stop().animate({top:this.pane.top+'px'},speed,easing);
+          } else {
+            this.pane[0].style.top = this.pane.top + 'px';
+          }
+          
+          this.container.trigger('scroll');
         },
 
 
@@ -578,9 +629,9 @@ Changelog:
         //
         onMouseWheel: function(ev, delta){
 			
-			if(!this.container.hasClass('focused') && !this.container.hasClass('hover')) { return; }
-			
-			delta *= 2.5;
+            if(!this.container.hasClass('focused') && !this.container.hasClass('hover')) { return; }
+            
+            delta *= 2.5;
 		
             // calculate new handle position
             this.handle.top -= 6*delta;
@@ -667,7 +718,7 @@ Changelog:
             this.handle[0].style.top = this.handle.top + 'px';
 
             this.setContentPosition();
-			this.container.trigger('scrolled');
+            this.container.trigger('scroll');
         },
 
 
@@ -680,19 +731,19 @@ Changelog:
                 this.container.addClass('hover');
                 this.handleContainer.addClass('hover');
 				
-				//remove the hover from parent scroll panes
-				this.container.closest('div.scrollbar-pane').each(function() {
-					$(this).parent().removeClass('hover focused');
-				});
+                //remove the hover from parent scroll panes
+                this.container.closest('div.scrollbar-pane').each(function() {
+                  $(this).parent().removeClass('hover focused');
+                });
 				
             } else {
                 this.container.removeClass('hover');
                 this.handleContainer.removeClass('hover');
 				
-				//remove the hover from parent scroll panes
-				this.container.closest('div.scrollbar-pane').each(function() {
-					$(this).parent().addClass('hover focused');
-				});
+                //remove the hover from parent scroll panes
+                this.container.closest('div.scrollbar-pane').each(function() {
+                  $(this).parent().addClass('hover focused');
+                });
 				
             }
 			
