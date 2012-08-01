@@ -4,7 +4,7 @@ Version 0.4
 https://github.com/thomd/jquery-scroll
 Copyright (c) 2011 Thomas Duerr (me-at-thomd-dot-net)
 Licensed under the MIT license (https://raw.github.com/thomd/jquery-scroll/master/MIT-LICENSE)
-Modified version at http://github.com/akmjenkins/jquery-scroll
+Modified version at http://github.com/matheusvilela/jquery-scroll
 */
 /*
 Usage Examples:
