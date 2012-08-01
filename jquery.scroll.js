@@ -204,7 +204,7 @@ Changelog:
           return this.each(function() {
               if(this.scrollbar) {
                 this.scrollbar.unscrollbar();
-                delete this.scrollbar;
+                this.scrollbar = undefined;
               }
           });
         }
@@ -240,7 +240,7 @@ Changelog:
         scrollStep          : 20,     // increment of handle position between two mousedowns on arrows [Number in px].
         scrollTimeoutArrows : 40,     // timeout of handle speed while mousedown in the handle container [Number in milli sec].
         scrollStepArrows    : 3,      // increment of handle position between two mousedowns in the handle container [px].
-        repaintOnResize     : false,  // repaint scrollbar on window resize.
+        repaintOnResize     : false   // repaint scrollbar on window resize.
     };
 
 
@@ -634,7 +634,7 @@ Changelog:
             delta *= 2.5;
 		
             // calculate new handle position
-            this.handle.top -= 6*delta;
+            this.handle.top -= 2*delta;
 
             this.setHandlePosition();
             this.setContentPosition();
