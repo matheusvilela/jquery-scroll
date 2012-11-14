@@ -383,6 +383,11 @@ Changelog:
             //need this for added event listeners
             var self = this;
 
+            if((navigator.userAgent.match(/iPhone/i)) || (navigator.userAgent.match(/iPod/i)) || (navigator.userAgent.match(/iPad/i))||(navigator.userAgent.match(/Android/i))) {
+                this.container.bind('touchstart.container', $.proxy(this, 'onTouchStart'));
+            }
+
+
             // append drag-drop event on scrollbar-handle
             // the events 'mousemove.handle' and 'mouseup.handle' are dynamically appended in the startOfHandleMove-function
             this.handle.bind('mousedown.handle', $.proxy(this, 'startOfHandleMove'));
@@ -623,6 +628,31 @@ Changelog:
           this.container.trigger('scroll');
         },
 
+        //
+        // touch movement
+        //
+        onTouchStart: function(e){
+			
+            var $container = this.container;
+            var self = this;
+
+            e = e.originalEvent.touches[0];
+            var sY = e.pageY;
+
+            $container.bind('touchmove.container', function(ev){
+                ev.preventDefault();
+                ev = ev.originalEvent.touches[0];
+
+                var delta = ev.pageY-sY;
+                // calculate new handle position
+                self.handle.top -= delta;
+                self.setHandlePosition();
+                self.setContentPosition();
+            });
+            $container.bind('touchend.container',function(ev){
+                $container.unbind('touchmove.container touchend.container');
+            });
+        },
 
         //
         // mouse wheel movement
